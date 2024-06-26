@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.web.WebView?>
+
+<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.example.mapnavigator.HelloController" spacing="10" alignment="center" style="-fx-padding: 20;">
+    <Label text="Map Navigator" style="-fx-font-size: 24; -fx-font-weight: bold;"/>
+    <Label text="Instructions: Select the source and destination cities, then click 'Find Shortest Path' to see the shortest route. You can also add new connections or save and load the graph." style="-fx-font-size: 14; -fx-padding: 10; -fx-border-color: #cccccc; -fx-border-width: 1; -fx-background-color: #e8e8e8;"/>
+    <Label text="Source:"/>
+    <ComboBox fx:id="sourceComboBox" promptText="Select source location" tooltip="Select the starting point"/>
+    <Label text="Destination:"/>
+    <ComboBox fx:id="destinationComboBox" promptText="Select destination location" tooltip="Select the destination point"/>
+    <HBox spacing="10">
+        <Button text="Find Shortest Path" onAction="#onFindPathClick" tooltip="Click to find the shortest path between the selected source and destination"/>
+        <Button text="Save Graph" onAction="#onSaveGraphClick" tooltip="Save the current graph data"/>
+        <Button text="Load Graph" onAction="#onLoadGraphClick" tooltip="Load the previously saved graph data"/>
+    </HBox>
+    <Label fx:id="resultLabel" text="Result:" style="-fx-font-size: 16; -fx-text-fill: blue;"/>
+    <WebView fx:id="mapView" prefHeight="400" prefWidth="800"/>
+    <VBox spacing="10">
+        <Label style="-fx-font-weight: bold;" text="Add New Connection"/>
+        <HBox spacing="10">
+            <Label text="Source:"/>
+            <TextField fx:id="newSourceField" promptText="Enter source" tooltip="Enter the source location"/>
+            <Label text="Destination:"/>
+            <TextField fx:id="newDestinationField" promptText="Enter destination" tooltip="Enter the destination location"/>
+            <Label text="Weight:"/>
+            <TextField fx:id="newWeightField" promptText="Enter weight" tooltip="Enter the distance or weight between the locations"/>
+            <Button text="Add Edge" onAction="#onAddEdgeClick" tooltip="Click to add the new connection"/>
+        </HBox>
+    </VBox>
+    <Canvas fx:id="graphCanvas" width="800" height="600"/>
+</VBox>
