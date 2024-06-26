@@ -1,50 +1,46 @@
 package com.example.mapnavigator;
 
-import java.io.*;
 import java.util.*;
 
-public class Graph implements Serializable {
-    private final Map<String, List<Edge>> adjacencyList = new HashMap<>();
-
-    public static class Edge implements Serializable {
-        String destination;
-        int weight;
-
-        Edge(String destination, int weight) {
-            this.destination = destination;
-            this.weight = weight;
-        }
-    }
-
+public class Graph {
+    private final Map<String, Map<String, Integer>> edges = new HashMap<>();
     public void addEdge(String source, String destination, int weight) {
-        adjacencyList.computeIfAbsent(source, k -> new ArrayList<>()).add(new Edge(destination, weight));
-        adjacencyList.computeIfAbsent(destination, k -> new ArrayList<>()).add(new Edge(source, weight));
+        edges.computeIfAbsent(source, k -> new HashMap<>()).put(destination, weight);
+        edges.computeIfAbsent(destination, k -> new HashMap<>()).put(source, weight);
     }
-
-    public List<String> shortestPath(String source, String destination) {
-        // Dijkstra's algorithm implementation
-        Map<String, Integer> distances = new HashMap<>();
-        Map<String, String> previousNodes = new HashMap<>();
-        PriorityQueue<String> nodes = new PriorityQueue<>(Comparator.comparingInt(distances::get));
-
-        for (String vertex : adjacencyList.keySet()) {
-            if (vertex.equals(source)) {
-                distances.put(vertex, 0);
-            } else {
-                distances.put(vertex, Integer.MAX_VALUE);
-            }
-            nodes.add(vertex);
+    public Map<String, Integer> getEdges(String node) {
+        return edges.getOrDefault(node, new HashMap<>());
+    }
+    public Set<String> getNodes() {
+        return edges.keySet();
+    }
+    public boolean deleteEdge(String source, String destination) {
+        if (edges.containsKey(source) && edges.get(source).containsKey(destination)) {
+            edges.get(source).remove(destination);
+            edges.get(destination).remove(source);
+            return true;
         }
-
+        return false;
+    }
+    public List<String> dijkstraShortestPath(String source, String destination) {
+        Map<String, Integer> distances = new HashMap<>();
+        Map<String, String> previous = new HashMap<>();
+        PriorityQueue<String> nodes = new PriorityQueue<>(Comparator.comparingInt(distances::get));
+        for (String node : edges.keySet()) {
+            if (node.equals(source)) {
+                distances.put(node, 0);
+            } else {
+                distances.put(node, Integer.MAX_VALUE);
+            }
+            nodes.add(node);
+        }
         while (!nodes.isEmpty()) {
             String closest = nodes.poll();
             if (closest.equals(destination)) {
                 List<String> path = new ArrayList<>();
-                while (previousNodes.containsKey(closest)) {
-                    path.add(closest);
-                    closest = previousNodes.get(closest);
+                for (String at = destination; at != null; at = previous.get(at)) {
+                    path.add(at);
                 }
-                path.add(source);
                 Collections.reverse(path);
                 return path;
             }
@@ -52,34 +48,36 @@ public class Graph implements Serializable {
             if (distances.get(closest) == Integer.MAX_VALUE) {
                 break;
             }
-
-            for (Edge neighbor : adjacencyList.getOrDefault(closest, new ArrayList<>())) {
-                int alt = distances.get(closest) + neighbor.weight;
-                if (alt < distances.get(neighbor.destination)) {
-                    distances.put(neighbor.destination, alt);
-                    previousNodes.put(neighbor.destination, closest);
-                    nodes.add(neighbor.destination);
+            for (Map.Entry<String, Integer> neighbor : edges.get(closest).entrySet()) {
+                int alt = distances.get(closest) + neighbor.getValue();
+                if (alt < distances.get(neighbor.getKey())) {
+                    distances.put(neighbor.getKey(), alt);
+                    previous.put(neighbor.getKey(), closest);
+                    nodes.remove(neighbor.getKey());
+                    nodes.add(neighbor.getKey());
                 }
             }
         }
         return new ArrayList<>();
     }
-
-    public Map<String, List<Edge>> getAdjacencyList() {
-        return adjacencyList;
+    public List<List<String>> findAllPaths(String source, String destination) {
+        List<List<String>> allPaths = new ArrayList<>();
+        findAllPathsUtil(source, destination, new HashSet<>(), new ArrayList<>(), allPaths);
+        return allPaths;
     }
-
-    public void saveGraph(String filename) throws IOException {
-        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filename))) {
-            out.writeObject(adjacencyList);
+    private void findAllPathsUtil(String current, String destination, Set<String> visited, List<String> path, List<List<String>> allPaths) {
+        visited.add(current);
+        path.add(current);
+        if (current.equals(destination)) {
+            allPaths.add(new ArrayList<>(path));
+        } else {
+            for (String neighbor : edges.get(current).keySet()) {
+                if (!visited.contains(neighbor)) {
+                    findAllPathsUtil(neighbor, destination, visited, path, allPaths);
+                }
+            }
         }
-    }
-
-    public void loadGraph(String filename) throws IOException, ClassNotFoundException {
-        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(filename))) {
-            Map<String, List<Edge>> loadedList = (Map<String, List<Edge>>) in.readObject();
-            adjacencyList.clear();
-            adjacencyList.putAll(loadedList);
-        }
+        path.remove(path.size() - 1);
+        visited.remove(current);
     }
 }
